@@ -6,12 +6,19 @@ use Test::More 0.96;
 {
   package Object;
   use Moose;
-  with 'MooseX::OneArgNew' => {
-    type     => 'Int',
-    init_arg => 'size',
-  };
+  with(
+    'MooseX::OneArgNew' => {
+      type     => 'Int',
+      init_arg => 'size',
+    },
+    'MooseX::OneArgNew' => {
+      type     => 'ArrayRef',
+      init_arg => 'nums',
+    },
+  );
 
   has size => (is => 'ro', isa => 'Int');
+  has nums => (is => 'ro', isa => 'ArrayRef[Int]');
 }
 
 {
@@ -30,6 +37,13 @@ use Test::More 0.96;
   my $obj = Object->new(size => 10);
   isa_ok($obj, 'Object');
   is($obj->size, 10, "pair args to ->new worked");
+}
+
+{
+  my $obj = Object->new([ 1, 2, 3 ]);
+  isa_ok($obj, 'Object');
+  is($obj->size, undef, 'no size after ->new([...])');
+  is_deeply($obj->nums, [1, 2, 3], "arrayref args to ->new worked");
 }
 
 {
