@@ -2,6 +2,14 @@ package MooseX::OneArgNew;
 use MooseX::Role::Parameterized;
 # ABSTRACT: teach ->new to accept single, non-hashref arguments
 
+=begin :prelude
+
+=head1 WARNING
+
+The interface for this library may change drastically.  It is not yet stable.
+
+=end :prelude
+
 =head1 SYNOPSIS
 
 In our class definition:
