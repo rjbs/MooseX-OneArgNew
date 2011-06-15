@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+          just removed the "might change radically" warning
 
 0.001     2010-10-18
 
