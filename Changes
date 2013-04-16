@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+          add a "coerce" parameter to the role; now ->new can accept one arg
+          that can be coerced to the expected type; suggested by Mark Jason
+          Dominus
 
 0.002     2011-06-15 15:32:50 America/New_York
           just removed the "might change radically" warning

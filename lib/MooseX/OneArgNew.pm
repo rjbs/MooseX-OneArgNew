@@ -43,14 +43,27 @@ MooseX::OneArgNew lets your constructor take a single argument, which will be
 translated into the value for a one-entry hashref.  It is a L<parameterized
 role|MooseX::Role::Parameterized> with two parameters:
 
-=for :list
+=begin  :list
+
 = type
+
 The Moose type that the single argument must be for the one-arg form to work.
 This should be an existing type, and may be either a string type or a
 MooseX::Type.
+
 = init_arg
+
 This is the string that will be used as the key for the hashref constructed
 from the one-arg call to new.
+
+= coerce
+
+If true, a single argument to new will be coerced into the expected type if
+possible.  Keep in mind that if there are no coercions for the type, this will
+be an error, and that if a coercion from HashRef exists, you might be getting
+yourself into a weird situation.
+
+=end :list
 
 =head2 WARNINGS
 
@@ -80,6 +93,11 @@ parameter type => (
   required => 1,
 );
 
+parameter coerce => (
+  isa      => 'Bool',
+  default  => 0,
+);
+
 parameter init_arg => (
   isa      => 'Str',
   required => 1,
@@ -93,9 +111,10 @@ role {
     my $self = shift;
     return $self->$orig(@_) unless @_ == 1;
 
-    return $self->$orig(@_) unless $p->type->check($_[0]);
+    my $value = $p->coerce ? $p->type->coerce($_[0]) : $_[0];
+    return $self->$orig(@_) unless $p->type->check($value);
 
-    return { $p->init_arg => $_[0] }
+    return { $p->init_arg => $value }
   };
 };
 
