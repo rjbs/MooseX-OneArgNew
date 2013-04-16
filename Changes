@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.003     2013-04-16 16:36:26 America/New_York
           add a "coerce" parameter to the role; now ->new can accept one arg
           that can be coerced to the expected type; suggested by Mark Jason
           Dominus
