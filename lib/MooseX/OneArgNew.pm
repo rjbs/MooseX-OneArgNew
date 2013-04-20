@@ -41,7 +41,7 @@ When making a message:
 
 MooseX::OneArgNew lets your constructor take a single argument, which will be
 translated into the value for a one-entry hashref.  It is a L<parameterized
-role|MooseX::Role::Parameterized> with two parameters:
+role|MooseX::Role::Parameterized> with three parameters:
 
 =begin  :list
 
