@@ -1,5 +1,5 @@
 package MooseX::OneArgNew;
-use MooseX::Role::Parameterized;
+use MooseX::Role::Parameterized 1.0;
 # ABSTRACT: teach ->new to accept single, non-hashref arguments
 
 =head1 SYNOPSIS
