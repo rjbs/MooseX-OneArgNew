@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.005     2015-07-14 21:52:35-04:00 America/New_York
         - bump required version of MXRP
 
 0.004     2013-10-05 09:05:39 America/New_York
