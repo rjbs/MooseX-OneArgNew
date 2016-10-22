@@ -75,6 +75,45 @@ undefined and likely to cause bugs.
 It would be a B<very bad idea> to supply a type that could accept a normal
 hashref of arguments to C<new>.
 
+=head2 AS ATTRIBUTE TRAIT
+
+Instead of applying the role C<MooseX::OneArgNew> to the class,
+the trait C<OneArgNew> can be assigned to the desired attributes. E.g.,
+
+  package Object;
+
+  use Moose;
+  use MooseX::OneArgNew;
+
+  has size => (
+    traits => [qw/ OneArgNew /],
+    is     => 'ro',
+    isa    => 'Int',
+  );
+
+  has nums => (
+    traits => [qw/ OneArgNew /],
+    is     => 'ro',
+    isa    => 'ArrayRef[Int]',
+  );
+
+  has vote => ( 
+    traits => [qw/ OneArgNew /],
+    is     => 'ro',
+    isa    => 'Vote',
+    coerce => 1,
+ );
+
+Single argument calls to C<new()> will be converted to
+a hashref using the first matching attribute (if any).
+
+Note that the attributes are compared in reverse order
+of declaration. In the example, the argument would be first
+tried against C<vote>, then C<nums> and finally C<size>.
+
+An attribute without an C<isa> can have the C<OneArgNew>
+trait, and will trivially always match. 
+
 =cut
 
 use Moose::Util::TypeConstraints;
@@ -118,5 +157,36 @@ role {
     return { $p->init_arg => $value }
   };
 };
+
+{
+package
+    Moose::Meta::Attribute::Custom::Trait::OneArgNew;
+
+use Moose::Role;
+
+after attach_to_class => sub {
+    my( $self, $class ) = @_;
+
+    $class->add_around_method_modifier( BUILDARGS => sub {
+            my $orig = shift;
+            my $class = shift;
+
+            # nothing to do if not exactly one argument
+            # or the argument is a hashref
+            return $orig->( $class, @_ ) unless @_ == 1 and ref $_[0] ne 'HASH';
+
+            my $value = $_[0];
+
+            $value = $self->type_constraint->coerce($value)
+                if $self->should_coerce;
+
+            $value = { $self->name => $value }
+                if eval { $self->verify_against_type_constraint($value) };
+
+            return $orig->( $class, $value );
+    });
+};
+
+}
 
 1;
