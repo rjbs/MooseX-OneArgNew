@@ -91,25 +91,13 @@ the trait C<OneArgNew> can be assigned to the desired attributes. E.g.,
     isa    => 'Int',
   );
 
-  has nums => (
-    traits => [qw/ OneArgNew /],
-    is     => 'ro',
-    isa    => 'ArrayRef[Int]',
-  );
-
-  has vote => ( 
-    traits => [qw/ OneArgNew /],
-    is     => 'ro',
-    isa    => 'Vote',
-    coerce => 1,
- );
 
 Single argument calls to C<new()> will be converted to
-a hashref using the first matching attribute (if any).
+a hashref using the attribute (if its type matches). 
 
-Note that the attributes are compared in reverse order
-of declaration. In the example, the argument would be first
-tried against C<vote>, then C<nums> and finally C<size>.
+Only one attribute
+can be given the C<OneArgNew> trait. More than one attribute with
+the trait will cause the program to die at class-building time.
 
 An attribute without an C<isa> can have the C<OneArgNew>
 trait, and will trivially always match. 
@@ -166,6 +154,17 @@ use Moose::Role;
 
 after attach_to_class => sub {
     my( $self, $class ) = @_;
+
+    my @one_argies = ( $self->name, 
+        map { $_->name }
+        grep { $_->does('Moose::Meta::Attribute::Custom::Trait::OneArgNew') }
+        $class->get_all_attributes 
+    );
+
+    # since this happens for each new attribute, we'll always either have
+    # an array of size 1 or 2
+    die "both attributes ", ( join ' and ', map { "'$_'" } @one_argies ),
+        "have trait OneArgNew, only one allowed\n" if @one_argies > 1;
 
     $class->add_around_method_modifier( BUILDARGS => sub {
             my $orig = shift;
