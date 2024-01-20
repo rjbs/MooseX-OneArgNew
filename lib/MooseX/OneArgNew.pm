@@ -75,6 +75,33 @@ undefined and likely to cause bugs.
 It would be a B<very bad idea> to supply a type that could accept a normal
 hashref of arguments to C<new>.
 
+=head2 AS ATTRIBUTE TRAIT
+
+Instead of applying the role C<MooseX::OneArgNew> to the class,
+the trait C<OneArgNew> can be assigned to the desired attributes. E.g.,
+
+  package Object;
+
+  use Moose;
+  use MooseX::OneArgNew;
+
+  has size => (
+    traits => [qw/ OneArgNew /],
+    is     => 'ro',
+    isa    => 'Int',
+  );
+
+
+Single argument calls to C<new()> will be converted to
+a hashref using the attribute (if its type matches). 
+
+Only one attribute
+can be given the C<OneArgNew> trait. More than one attribute with
+the trait will cause the program to die at class-building time.
+
+An attribute without an C<isa> can have the C<OneArgNew>
+trait, and will trivially always match. 
+
 =cut
 
 use Moose::Util::TypeConstraints;
@@ -118,5 +145,47 @@ role {
     return { $p->init_arg => $value }
   };
 };
+
+{
+package
+    Moose::Meta::Attribute::Custom::Trait::OneArgNew;
+
+use Moose::Role;
+
+after attach_to_class => sub {
+    my( $self, $class ) = @_;
+
+    my @one_argies = ( $self->name, 
+        map { $_->name }
+        grep { $_->does('Moose::Meta::Attribute::Custom::Trait::OneArgNew') }
+        $class->get_all_attributes 
+    );
+
+    # since this happens for each new attribute, we'll always either have
+    # an array of size 1 or 2
+    die "both attributes ", ( join ' and ', map { "'$_'" } @one_argies ),
+        "have trait OneArgNew, only one allowed\n" if @one_argies > 1;
+
+    $class->add_around_method_modifier( BUILDARGS => sub {
+            my $orig = shift;
+            my $class = shift;
+
+            # nothing to do if not exactly one argument
+            # or the argument is a hashref
+            return $orig->( $class, @_ ) unless @_ == 1 and ref $_[0] ne 'HASH';
+
+            my $value = $_[0];
+
+            $value = $self->type_constraint->coerce($value)
+                if $self->should_coerce;
+
+            $value = { $self->name => $value }
+                if eval { $self->verify_against_type_constraint($value) };
+
+            return $orig->( $class, $value );
+    });
+};
+
+}
 
 1;
